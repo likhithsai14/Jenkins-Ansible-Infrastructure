@@ -26,24 +26,26 @@ pipeline {
             }
         }
 
-        stage('Trigger Ansible Deployment') {
-            steps {
-                bat 'del /f /q C:\\Users\\likhi\\ansible-result.txt 2>nul'
-                bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
+        
+stage('Trigger Ansible Deployment') {
+    steps {
+        bat 'if exist C:\\Users\\likhi\\ansible-result.txt del /f /q C:\\Users\\likhi\\ansible-result.txt'
+        bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
 
-                timeout(time: 3, unit: 'MINUTES') {
-                    waitUntil {
-                        sleep time: 3, unit: 'SECONDS'
-                        powershell(
-                            returnStatus: true,
-                            script: 'if ((Test-Path "C:\\Users\\likhi\\ansible-result.txt") -and ((Get-Content "C:\\Users\\likhi\\ansible-result.txt" -Raw).Trim() -in @("SUCCESS","FAILURE"))) { exit 0 } else { exit 1 }'
-                        ) == 0
-                    }
-                }
-
-                bat 'findstr /x "SUCCESS" C:\\Users\\likhi\\ansible-result.txt'
+        timeout(time: 3, unit: 'MINUTES') {
+            waitUntil {
+                sleep time: 3, unit: 'SECONDS'
+                bat(
+                    returnStatus: true,
+                    script: 'if not exist C:\\Users\\likhi\\ansible-result.txt exit /b 1 & findstr /x "SUCCESS" C:\\Users\\likhi\\ansible-result.txt >nul'
+                ) == 0
             }
         }
+
+        echo 'Ansible deployment reported SUCCESS.'
+    }
+}
+
 
         stage('Verify Website') {
             steps {
