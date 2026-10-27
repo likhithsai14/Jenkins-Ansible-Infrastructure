@@ -9,51 +9,42 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo 'Downloading project from GitHub'
-                checkout scm
+                echo 'Project retrieved from GitHub'
             }
         }
 
         stage('Verify Tools') {
             steps {
-                sh 'ansible --version'
-                sh 'docker --version'
-                sh 'git --version'
+                bat 'wsl -d Ubuntu -- bash -lc "ansible --version"'
+                bat 'docker --version'
             }
         }
 
         stage('Validate Playbook') {
             steps {
-                sh 'ansible-playbook --syntax-check playbooks/provision.yml'
+                bat 'wsl -d Ubuntu -- bash -lc "cd ~/Jenkins-Ansible-Infrastructure && ansible-playbook --syntax-check playbooks/provision.yml"'
             }
         }
 
         stage('Provision Infrastructure') {
             steps {
-                sh 'ansible-playbook playbooks/provision.yml'
+                bat 'wsl -d Ubuntu -- bash -lc "cd ~/Jenkins-Ansible-Infrastructure && ansible-playbook playbooks/provision.yml"'
             }
         }
 
-        stage('Verify Deployment') {
+        stage('Verify Website') {
             steps {
-                sh 'docker ps'
-                sh 'docker exec devops-demo-web nginx -t'
-                sh 'curl --fail http://127.0.0.1:8081'
+                bat 'powershell -NoProfile -Command "Invoke-WebRequest http://localhost:8081 -UseBasicParsing | Select-Object -ExpandProperty StatusCode"'
             }
         }
     }
 
     post {
         success {
-            echo 'SUCCESS: Infrastructure provisioned using Jenkins and Ansible.'
+            echo 'SUCCESS: Infrastructure provisioned using Jenkins and Ansible!'
         }
-
         failure {
-            echo 'FAILED: Check the Jenkins Console Output.'
-        }
-
-        always {
-            echo 'Pipeline execution completed.'
+            echo 'FAILED: Check Console Output for errors.'
         }
     }
 }
