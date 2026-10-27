@@ -13,14 +13,12 @@ pipeline {
             }
         }
 
-        
-stage('Verify Tools') {
-    steps {
-        bat '"C:\\Users\\likhi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" --version'
-        bat 'wsl -d Ubuntu -- bash -lc "ansible --version"'
-    }
-}
-
+        stage('Verify Tools') {
+            steps {
+                bat '"C:\\Users\\likhi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" --version'
+                bat 'wsl -d Ubuntu -- bash -lc "ansible --version"'
+            }
+        }
 
         stage('Validate Playbook') {
             steps {
@@ -29,24 +27,23 @@ stage('Verify Tools') {
         }
 
         stage('Trigger Ansible Deployment') {
-    steps {
-        bat 'del /f /q C:\\Users\\likhi\\ansible-result.txt 2>nul'
-        bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
+            steps {
+                bat 'del /f /q C:\\Users\\likhi\\ansible-result.txt 2>nul'
+                bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
 
-        timeout(time: 3, unit: 'MINUTES') {
-            waitUntil {
-                sleep time: 3, unit: 'SECONDS'
-                powershell(
-                    returnStatus: true,
-                    script: 'if ((Test-Path "C:\\Users\\likhi\\ansible-result.txt") -and ((Get-Content "C:\\Users\\likhi\\ansible-result.txt" -Raw).Trim() -in @("SUCCESS","FAILURE"))) { exit 0 } else { exit 1 }'
-                ) == 0
+                timeout(time: 3, unit: 'MINUTES') {
+                    waitUntil {
+                        sleep time: 3, unit: 'SECONDS'
+                        powershell(
+                            returnStatus: true,
+                            script: 'if ((Test-Path "C:\\Users\\likhi\\ansible-result.txt") -and ((Get-Content "C:\\Users\\likhi\\ansible-result.txt" -Raw).Trim() -in @("SUCCESS","FAILURE"))) { exit 0 } else { exit 1 }'
+                        ) == 0
+                    }
+                }
+
+                bat 'findstr /x "SUCCESS" C:\\Users\\likhi\\ansible-result.txt'
             }
         }
-
-        bat 'findstr /x "SUCCESS" C:\\Users\\likhi\\ansible-result.txt'
-    }
-}
-}
 
         stage('Verify Website') {
             steps {
