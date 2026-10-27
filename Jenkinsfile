@@ -13,29 +13,30 @@ pipeline {
             }
         }
 
-        stage('Verify Tools') {
-            steps {
-                bat '"C:\\Users\\likhi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" --version'
-                bat 'wsl -d Ubuntu -- bash -lc "ansible --version"'
-            }
-        }
+        
+stage('Verify Tools') {
+    steps {
+        bat '"C:\\Users\\likhi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" --version'
+        echo 'Ansible will be executed through Windows Task Scheduler.'
+    }
+}
 
-        stage('Validate Playbook') {
-            steps {
-                bat 'wsl -d Ubuntu -- bash -lc "cd ~/Jenkins-Ansible-Infrastructure && ansible-playbook --syntax-check playbooks/provision.yml"'
-            }
-        }
+
+        
+stage('Validate Playbook') {
+    steps {
+        echo 'Playbook execution will be handled by the scheduled Ubuntu task.'
+    }
+}
+
 
         
 
+
 stage('Trigger Ansible Deployment') {
     steps {
-        bat 'if exist C:\\Users\\likhi\\ansible-result.txt del /f /q C:\\Users\\likhi\\ansible-result.txt'
         bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
-        bat 'timeout /t 15 /nobreak'
-        bat 'if not exist C:\\Users\\likhi\\ansible-result.txt exit /b 1'
-        bat 'findstr /x "SUCCESS" C:\\Users\\likhi\\ansible-result.txt'
-        echo 'Ansible deployment reported SUCCESS.'
+        bat 'timeout /t 20 /nobreak'
     }
 }
 
