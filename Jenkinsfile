@@ -29,11 +29,24 @@ stage('Verify Tools') {
         }
 
         stage('Trigger Ansible Deployment') {
-            steps {
-                bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
-                sleep time: 15, unit: 'SECONDS'
+    steps {
+        bat 'del /f /q C:\\Users\\likhi\\ansible-result.txt 2>nul'
+        bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
+
+        timeout(time: 3, unit: 'MINUTES') {
+            waitUntil {
+                sleep time: 3, unit: 'SECONDS'
+                powershell(
+                    returnStatus: true,
+                    script: 'if ((Test-Path "C:\\Users\\likhi\\ansible-result.txt") -and ((Get-Content "C:\\Users\\likhi\\ansible-result.txt" -Raw).Trim() -in @("SUCCESS","FAILURE"))) { exit 0 } else { exit 1 }'
+                ) == 0
             }
         }
+
+        bat 'findstr /x "SUCCESS" C:\\Users\\likhi\\ansible-result.txt'
+    }
+}
+}
 
         stage('Verify Website') {
             steps {
