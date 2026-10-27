@@ -1,0 +1,56 @@
+
+---
+- name: Provision a demo web server
+  hosts: local
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Check Docker availability
+      ansible.builtin.command: docker info
+      changed_when: false
+
+    - name: Download the Nginx image
+      ansible.builtin.command: docker pull nginx:alpine
+      changed_when: false
+
+    - name: Remove an old demo container if present
+      ansible.builtin.shell: |
+        docker rm -f devops-demo-web >/dev/null 2>&1 || true
+      changed_when: false
+
+    - name: Create and start the web server
+      ansible.builtin.command:
+        argv:
+          - docker
+          - run
+          - -d
+          - --name
+          - devops-demo-web
+          - -p
+          - 8081:80
+          - nginx:alpine
+
+    - name: Add a custom home page
+      ansible.builtin.command:
+        argv:
+          - docker
+          - exec
+          - devops-demo-web
+          - sh
+          - -c
+          - "printf '%s' '<html><body><h1>Infrastructure Provisioned Successfully!</h1><p>Jenkins automated deployment using Ansible.</p></body></html>' > /usr/share/nginx/html/index.html"
+
+    - name: Verify the website
+      ansible.builtin.command:
+        argv:
+          - curl
+          - --fail
+          - --silent
+          - http://127.0.0.1:8081
+      register: web_response
+      changed_when: false
+
+    - name: Display website response
+      ansible.builtin.debug:
+        msg: "{{ web_response.stdout }}"
