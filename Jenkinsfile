@@ -27,24 +27,18 @@ pipeline {
         }
 
         
+
 stage('Trigger Ansible Deployment') {
     steps {
         bat 'if exist C:\\Users\\likhi\\ansible-result.txt del /f /q C:\\Users\\likhi\\ansible-result.txt'
         bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
-
-        timeout(time: 3, unit: 'MINUTES') {
-            waitUntil {
-                sleep time: 3, unit: 'SECONDS'
-                bat(
-                    returnStatus: true,
-                    script: 'if not exist C:\\Users\\likhi\\ansible-result.txt exit /b 1 & findstr /x "SUCCESS" C:\\Users\\likhi\\ansible-result.txt >nul'
-                ) == 0
-            }
-        }
-
+        bat 'timeout /t 15 /nobreak'
+        bat 'if not exist C:\\Users\\likhi\\ansible-result.txt exit /b 1'
+        bat 'findstr /x "SUCCESS" C:\\Users\\likhi\\ansible-result.txt'
         echo 'Ansible deployment reported SUCCESS.'
     }
 }
+
 
 
         stage('Verify Website') {
