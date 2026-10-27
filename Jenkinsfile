@@ -13,12 +13,14 @@ pipeline {
             }
         }
 
-        stage('Verify Tools') {
-            steps {
-                bat 'docker --version'
-                bat 'wsl -d Ubuntu -- bash -lc "ansible --version"'
-            }
-        }
+        
+stage('Verify Tools') {
+    steps {
+        bat '"C:\\Users\\likhi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" --version'
+        bat 'wsl -d Ubuntu -- bash -lc "ansible --version"'
+    }
+}
+
 
         stage('Validate Playbook') {
             steps {
