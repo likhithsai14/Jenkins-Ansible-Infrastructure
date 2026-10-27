@@ -15,8 +15,8 @@ pipeline {
 
         stage('Verify Tools') {
             steps {
-                bat 'wsl -d Ubuntu -- bash -lc "ansible --version"'
                 bat 'docker --version'
+                bat 'wsl -d Ubuntu -- bash -lc "ansible --version"'
             }
         }
 
@@ -26,22 +26,23 @@ pipeline {
             }
         }
 
-        stage('Provision Infrastructure') {
+        stage('Trigger Ansible Deployment') {
             steps {
-                bat 'wsl -d Ubuntu -- bash -lc "cd ~/Jenkins-Ansible-Infrastructure && ansible-playbook playbooks/provision.yml"'
+                bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
+                sleep time: 15, unit: 'SECONDS'
             }
         }
 
         stage('Verify Website') {
             steps {
-                bat 'powershell -NoProfile -Command "Invoke-WebRequest http://localhost:8081 -UseBasicParsing | Select-Object -ExpandProperty StatusCode"'
+                bat 'powershell -NoProfile -Command "$r = Invoke-WebRequest http://localhost:8081 -UseBasicParsing; if ($r.StatusCode -ne 200 -or $r.Content -notmatch \'Infrastructure Provisioned Successfully!\') { exit 1 }; Write-Output \'Website verification passed: HTTP 200\'"'
             }
         }
     }
 
     post {
         success {
-            echo 'SUCCESS: Infrastructure provisioned using Jenkins and Ansible!'
+            echo 'SUCCESS: Jenkins triggered the Ansible deployment and verified the website.'
         }
         failure {
             echo 'FAILED: Check Console Output for errors.'
