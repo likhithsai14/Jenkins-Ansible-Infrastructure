@@ -33,12 +33,15 @@ stage('Validate Playbook') {
         
 
 
+
 stage('Trigger Ansible Deployment') {
     steps {
         bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
-        bat 'timeout /t 20 /nobreak'
+        sleep(time: 20, unit: 'SECONDS')
+        echo 'Scheduled Ansible task was triggered.'
     }
 }
+
 
 
 
