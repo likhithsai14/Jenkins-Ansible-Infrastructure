@@ -34,13 +34,34 @@ stage('Validate Playbook') {
 
 
 
+
 stage('Trigger Ansible Deployment') {
     steps {
+        bat 'if exist C:\\Users\\likhi\\ansible-result.txt del /f /q C:\\Users\\likhi\\ansible-result.txt'
         bat 'schtasks /run /tn "Jenkins-Ansible-Runner"'
-        sleep(time: 20, unit: 'SECONDS')
-        echo 'Scheduled Ansible task was triggered.'
+
+        script {
+            int attempts = 0
+            String result = ''
+
+            while (attempts < 60 && result != 'SUCCESS' && result != 'FAILURE') {
+                sleep(time: 3, unit: 'SECONDS')
+                result = powershell(
+                    returnStdout: true,
+                    script: 'if (Test-Path "C:\\Users\\likhi\\ansible-result.txt") { Get-Content "C:\\Users\\likhi\\ansible-result.txt" -Raw }'
+                ).trim()
+                attempts++
+            }
+
+            if (result != 'SUCCESS') {
+                error("Ansible deployment failed or timed out. Result: ${result}")
+            }
+
+            echo 'Ansible deployment completed successfully.'
+        }
     }
 }
+
 
 
 
